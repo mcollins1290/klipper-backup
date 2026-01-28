@@ -5,13 +5,11 @@ klippy_uds_address = /home/cp/printer_1_data/comms/klippy.sock
 
 [authorization]
 trusted_clients = 
-	10.0.0.0/8
+	192.168.0.0/24
+	10.254.254.0/24
 	127.0.0.0/8
-	169.254.0.0/16
-	172.16.0.0/12
-	192.168.0.0/16
-	FE80::/10
 	::1/128
+	FE80::/10
 cors_domains = 
 	*.lan
 	*.local
@@ -36,7 +34,7 @@ type = git_repo
 primary_branch = master
 path = ~/mainsail-config
 origin = https://github.com/mainsail-crew/mainsail-config.git
-managed_services = klipper
+managed_services = moonraker
 
 [update_manager mainsail]
 type = web
