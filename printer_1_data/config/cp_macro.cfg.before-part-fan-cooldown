@@ -80,8 +80,6 @@ description: Cancel the actual running print
 rename_existing: CANCEL_PRINT_BASE
 variable_park: True
 gcode:
-  # Stop any successful-print cooldown cycle.
-  UPDATE_DELAYED_GCODE ID=_SUCCESSFUL_PRINT_COOLDOWN DURATION=0
   SET_GCODE_VARIABLE MACRO=_LCD_STATE VARIABLE=stopped_latch VALUE=1
   ## Move head and retract only if not already in the pause state and park set to true
 
@@ -166,30 +164,17 @@ gcode:
     SET_GCODE_VARIABLE MACRO=_LCD_STATE VARIABLE=completed_latch VALUE=1
     SET_DISPLAY_TEXT MSG="Print Completed"
     
-    # Shut down heaters and use the part-cooling fan to cool the nozzle.
-    # The delayed macro turns the fan off once the nozzle is below 50C.
-    M106 S255
+    # Shut down
+    M106 S0
     M104 S0
     M140 S0
     M84
-    UPDATE_DELAYED_GCODE ID=_SUCCESSFUL_PRINT_COOLDOWN DURATION=1
 
     # Force LCD ticker refresh
     UPDATE_DELAYED_GCODE ID=_LCD_STATUS_TICK DURATION=0.1
 
-[delayed_gcode _SUCCESSFUL_PRINT_COOLDOWN]
-gcode:
-    {% if printer.extruder.temperature|float < 50.0 %}
-      M106 S0
-    {% else %}
-      M106 S255
-      UPDATE_DELAYED_GCODE ID=_SUCCESSFUL_PRINT_COOLDOWN DURATION=5
-    {% endif %}
-
 [gcode_macro START_PRINT]
 gcode:
-    # Prevent a previous cooldown cycle from changing the fan during this print.
-    UPDATE_DELAYED_GCODE ID=_SUCCESSFUL_PRINT_COOLDOWN DURATION=0
     SET_GCODE_VARIABLE MACRO=_LCD_STATE VARIABLE=completed_latch VALUE=0
     SET_GCODE_VARIABLE MACRO=_LCD_STATE VARIABLE=stopped_latch VALUE=0
     SET_GCODE_VARIABLE MACRO=_LCD_STATE VARIABLE=suppress_printing VALUE=0
