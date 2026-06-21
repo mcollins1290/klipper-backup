@@ -185,10 +185,7 @@ gcode:
 
 [delayed_gcode _SUCCESSFUL_PRINT_COOLDOWN]
 gcode:
-    # Stop cooling if another nozzle heat cycle has been requested.
-    {% if printer.extruder.target|float > 0.0 %}
-      M106 S0
-    {% elif printer.extruder.temperature|float < 50.0 %}
+    {% if printer.extruder.temperature|float < 50.0 %}
       M106 S0
     {% else %}
       M106 S255

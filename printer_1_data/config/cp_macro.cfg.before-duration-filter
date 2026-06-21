@@ -140,7 +140,6 @@ gcode:
     {% set y_stop = params.Y|default(printer.toolhead.axis_maximum.y-5)|float %}
     {% set z_stop = printer.toolhead.axis_maximum.z|float %}
     {% set z_pos  = printer.toolhead.position.z|float %}
-    {% set print_duration = printer.print_stats.print_duration|float %}
 
     # Small retract + Z lift (relative moves)
     G91
@@ -167,28 +166,20 @@ gcode:
     SET_GCODE_VARIABLE MACRO=_LCD_STATE VARIABLE=completed_latch VALUE=1
     SET_DISPLAY_TEXT MSG="Print Completed"
     
-    # For prints longer than five minutes, use the part-cooling fan to cool
-    # the nozzle. Short calibration prints leave the fan off.
-    UPDATE_DELAYED_GCODE ID=_SUCCESSFUL_PRINT_COOLDOWN DURATION=0
-    {% if print_duration > 300.0 %}
-      M106 S255
-      UPDATE_DELAYED_GCODE ID=_SUCCESSFUL_PRINT_COOLDOWN DURATION=1
-    {% else %}
-      M106 S0
-    {% endif %}
+    # Shut down heaters and use the part-cooling fan to cool the nozzle.
+    # The delayed macro turns the fan off once the nozzle is below 50C.
+    M106 S255
     M104 S0
     M140 S0
     M84
+    UPDATE_DELAYED_GCODE ID=_SUCCESSFUL_PRINT_COOLDOWN DURATION=1
 
     # Force LCD ticker refresh
     UPDATE_DELAYED_GCODE ID=_LCD_STATUS_TICK DURATION=0.1
 
 [delayed_gcode _SUCCESSFUL_PRINT_COOLDOWN]
 gcode:
-    # Stop cooling if another nozzle heat cycle has been requested.
-    {% if printer.extruder.target|float > 0.0 %}
-      M106 S0
-    {% elif printer.extruder.temperature|float < 50.0 %}
+    {% if printer.extruder.temperature|float < 50.0 %}
       M106 S0
     {% else %}
       M106 S255
